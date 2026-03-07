@@ -4,7 +4,7 @@ import Header from "./components/Header";
 import ProductList from "./components/ProductList";
 import ProductForm from "./components/ProductForm";
 import EditProductModal from "./components/EditProductModal";
-
+//APP
 function App() {
   const [products, setProducts] = useState(() => {
     const savedProducts = localStorage.getItem("inventory_products");
