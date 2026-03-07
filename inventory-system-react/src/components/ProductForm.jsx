@@ -56,6 +56,7 @@ function ProductForm({ addProduct }) {
           <option value="Tech">Tech</option>
           <option value="Accesories">Accesories</option>
           <option value="Clothing">Clothing</option>
+          <option value="Clothing">Food</option>
         </select>
         <button
           type="submit"

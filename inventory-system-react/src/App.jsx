@@ -4,31 +4,39 @@ import Header from "./components/Header";
 import ProductList from "./components/ProductList";
 import ProductForm from "./components/ProductForm";
 import EditProductModal from "./components/EditProductModal";
-//APP
+import LoginPage from "./components/LoginPage";
+import DashboardStats from "./components/DashboardStats";
+import { data } from "autoprefixer";
+
 function App() {
-  const [products, setProducts] = useState(() => {
-    const savedProducts = localStorage.getItem("inventory_products");
-    if (savedProducts) {
-      return JSON.parse(savedProducts);
-    } else {
-      return [
-        {
-          id: 1,
-          name: "Gaming Laptop",
-          price: 1500,
-          category: "Tech",
-          stock: 5,
-        },
-        {
-          id: 2,
-          name: "Wireless Mouse",
-          price: 25,
-          category: "Accessories",
-          stock: 12,
-        },
-      ];
-    }
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/products")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Datos recibidos de Python:", data);
+        setProducts(data);
+      })
+      .catch((error) => console.error("Error conectando:", error));
+  }, []);
+
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("inventory_user");
+    return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem("inventory_user", JSON.stringify(userData));
+    toast.success(`Welcome back, ${userData.name}!`);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("inventory_user");
+    toast.info("You have been logget out.");
+  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -80,6 +88,17 @@ function App() {
 
     setProductToDelete(null);
   };
+  const handleSaveEdit = (updatedProduct) => {
+    const newProducts = products.map((product) => {
+      if (product.id === updatedProduct.id) {
+        return updatedProduct;
+      }
+      return product;
+    });
+    setProducts(newProducts);
+    setProductToEdit(null);
+    toast.success("Product updated successfully!");
+  };
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
@@ -90,19 +109,29 @@ function App() {
     return matchesSearch && matchesCategory;
   });
 
+  if (!user) {
+    return (
+      <>
+        <Toaster richColors position="bottom-right" />
+        <LoginPage onLogin={handleLogin} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100">
       <Toaster richColors position="bottom-right" />
 
-      <Header />
+      <Header user={user} onLogout={handleLogout} />
 
       <main className="p-8 max-w-7xl mx-auto">
+        <DashboardStats products={products} />
         <ProductForm addProduct={handleAddProduct} />
 
         <div className="mb-8 bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4">
           <input
             type="text"
-            placeholder="🔍 Search products by name..."
+            placeholder="Search products by name..."
             className="flex-1 p-3 rounded bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -129,6 +158,7 @@ function App() {
           products={filteredProducts}
           deleteProduct={handleDeleteProduct}
           updateStock={handleUpdateStock}
+          editProduct={(product) => setProductToEdit(product)}
         />
       </main>
 
@@ -159,6 +189,13 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+      {productToEdit !== null && (
+        <EditProductModal
+          product={productToEdit}
+          onSave={handleSaveEdit}
+          onClose={() => setProductToEdit(null)}
+        />
       )}
     </div>
   );

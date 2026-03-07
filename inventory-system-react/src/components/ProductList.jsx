@@ -1,4 +1,4 @@
-function ProductList({ products, deleteProduct, updateStock }) {
+function ProductList({ products, deleteProduct, updateStock, editProduct }) {
   if (products.length === 0) {
     return (
       <div className="text-center p-10 bg-white rounded-lg shadow-sm">
@@ -57,12 +57,20 @@ function ProductList({ products, deleteProduct, updateStock }) {
               {product.stock > 0 ? `Stock: ${product.stock}` : "Out of Stock"}
             </div>
           </div>
-          <button
-            onClick={() => deleteProduct(product.id)}
-            className="mt-4 w-full bg-red-100 text-red-600 py-2 rpunded-lg hover:bg-red-200 transition-colors text-sm font-semibold"
-          >
-            Delete
-          </button>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => editProduct(product)}
+              className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => deleteProduct(product.id)}
+              className="flex-1 bg-red-50 text-red-600 py-2 rounded-lg hover:bg-red-100 transition-colors text-sm font-semibold"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       ))}
     </div>
