@@ -38,3 +38,11 @@ def read_root():
 @app.get("/products", response_model=List[Product])
 def get_products():
     return products_db
+
+@app.post("/products", response_model=Product)
+def create_product(product: Product):
+    product.id = len(products_db) + 1
+
+    products_db.append(product)
+
+    return product

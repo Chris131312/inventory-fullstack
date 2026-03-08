@@ -52,9 +52,28 @@ function App() {
     localStorage.setItem("inventory_products", JSON.stringify(products));
   }, [products]);
 
-  const handleAddProduct = (newProduct) => {
-    setProducts([...products, newProduct]);
-    toast.success(`${newProduct.name} added to inventory!`);
+  const handleAddProduct = (newProductData) => {
+    fetch("http://127.0.0.1:8000/products", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newProductData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to add product");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setProducts([...products, data]);
+        setIsModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error adding product:", error);
+        alert("Error: Could not connect to the server.");
+      });
   };
 
   const handleUpdateStock = (id, newStock) => {
