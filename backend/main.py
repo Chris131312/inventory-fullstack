@@ -46,3 +46,16 @@ def create_product(product: Product):
     products_db.append(product)
 
     return product
+
+@app.put("/products/{product_id}", response_model=Product)
+def update_product(product_id: int, updated_product: Product):
+    for index, product in enumerate(products_db):
+        if product.id == product_id:
+
+            update_product.id = product_id
+
+            products_db[index] = update_product
+
+            return update_product
+        
+        return{"error": "Product not found"}
