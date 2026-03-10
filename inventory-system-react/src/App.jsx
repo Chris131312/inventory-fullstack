@@ -96,17 +96,33 @@ function App() {
   const confirmDelete = () => {
     if (!productToDelete) return;
 
-    const product = products.find((p) => p.id === productToDelete);
-    const newProducts = products.filter((p) => p.id !== productToDelete);
+    fetch(`http://127.0.0.1:8000/products/${productToDelete}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Error al borrar en el servidor");
+        }
+        return response.json();
+      })
+      .then(() => {
+        const product = products.find((p) => p.id === productToDelete);
+        const newProducts = products.filter((p) => p.id !== productToDelete);
 
-    setProducts(newProducts);
+        setProducts(newProducts);
 
-    if (product) {
-      toast.error(`${product.name} removed from system.`);
-    }
+        if (product) {
+          toast.error(`${product.name} removed from system.`);
+        }
 
-    setProductToDelete(null);
+        setProductToDelete(null);
+      })
+      .catch((error) => {
+        console.error("Error deleting product:", error);
+        toast.error("Error: Could not delete product");
+      });
   };
+
   const handleSaveEdit = (updatedProduct) => {
     console.log("Datos que intentamos enviar:", updatedProduct);
     fetch(`http://127.0.0.1:8000/products/${updatedProduct.id}`, {

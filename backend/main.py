@@ -63,4 +63,16 @@ def update_product(product_id: int, updated_product: Product):
         
         return{"error": "Product not found"}
     
-   
+@app.delete("/products/{product_id}")
+def delete_product(product_id: int):
+    for index, product in enumerate(products_db):
+        if type(product) is dict:
+            current_id = product["id"]
+        else:
+            current_id = product.id
+
+        if current_id == product.id:
+            del products_db[index]
+            return {"message": "Product deleted successfully"}
+        
+    return{"error": "Product not found"}
