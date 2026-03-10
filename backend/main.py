@@ -6,8 +6,8 @@ from typing import List
 app = FastAPI()
 
 origins = [
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 app.add_middleware(
@@ -47,17 +47,20 @@ def create_product(product: Product):
 
     return product
 
-@app.put("/products/{product_id}", response_model=Product)
+@app.put("/products/{product_id}")
 def update_product(product_id: int, updated_product: Product):
     for index, product in enumerate(products_db):
-        if product.id == product_id:
 
-            update_product.id = product_id
+        if type(product) is dict:
+            current_id = product["id"]
+        else:
+            current_id = product_id
 
-            products_db[index] = update_product
-
-            return update_product
+        if current_id == product_id:
+            updated_product.id = product_id
+            products_db[index] = updated_product.dict()
+            return updated_product
         
         return{"error": "Product not found"}
     
-    #comment
+   

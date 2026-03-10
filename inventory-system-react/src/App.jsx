@@ -108,15 +108,35 @@ function App() {
     setProductToDelete(null);
   };
   const handleSaveEdit = (updatedProduct) => {
-    const newProducts = products.map((product) => {
-      if (product.id === updatedProduct.id) {
-        return updatedProduct;
-      }
-      return product;
-    });
-    setProducts(newProducts);
-    setProductToEdit(null);
-    toast.success("Product updated successfully!");
+    console.log("Datos que intentamos enviar:", updatedProduct);
+    fetch(`http://127.0.0.1:8000/products/${updatedProduct.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedProduct),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Error al actualizar en el servidor");
+        }
+        return response.json();
+      })
+      .then((dataDelServidor) => {
+        const newProducts = products.map((product) => {
+          if (product.id === dataDelServidor) {
+            return dataDelServidor;
+          }
+          return product;
+        });
+        setProducts(newProducts);
+        setProductToEdit(null);
+        toast.success("Product updated successfully!");
+      })
+      .catch((error) => {
+        console.error("Error updating product:", error);
+        toast.error("Error: Could not update product");
+      });
   };
 
   const filteredProducts = products.filter((product) => {
