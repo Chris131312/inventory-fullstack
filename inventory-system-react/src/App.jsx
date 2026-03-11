@@ -68,7 +68,7 @@ function App() {
       })
       .then((data) => {
         setProducts([...products, data]);
-        setIsModalOpen(false);
+        toast.success("Product added successfully");
       })
       .catch((error) => {
         console.error("Error adding product:", error);

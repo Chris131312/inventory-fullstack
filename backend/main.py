@@ -71,7 +71,7 @@ def delete_product(product_id: int):
         else:
             current_id = product.id
 
-        if current_id == product.id:
+        if current_id == product_id:
             del products_db[index]
             return {"message": "Product deleted successfully"}
         
