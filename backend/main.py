@@ -1,12 +1,21 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from database import engine
 import models
+from sqlalchemy.orm import Session
+from database import SessionLocal
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try: 
+        yield db
+    finally:
+        db.close()
 
 origins = [
     "http://localhost:5173",
@@ -27,55 +36,55 @@ class Product(BaseModel):
     price: float
     stock: int
 
-products_db =[
-    {"id": 1, "name": "Laptop Gamer", "category": "Electrónica", "price": 1500.0, "stock": 5},
-    {"id": 2, "name": "Mouse Inalámbrico", "category": "Accesorios", "price": 25.0, "stock": 12},
-    {"id": 3, "name": "Teclado Mecánico", "category": "Electrónica", "price": 85.0, "stock": 8},
-    {"id": 4, "name": "Monitor 4K", "category": "Electrónica", "price": 300.0, "stock": 3},
-]
 
-@app.get("/")
-def read_root():
-    return{"message": "El sistema de inventario está ONLINE"}
+#GET
+@app.get("/products")
+def get_products(db: Session = Depends(get_db)):
+    products = db.query(models.DBProduct).all()
+    return products
 
-@app.get("/products", response_model=List[Product])
-def get_products():
-    return products_db
+#POST
+@app.post("/products")
+def create_product(product: Product, db: Session = Depends(get_db)):
+    new_product = models.DBProduct(
+        name=product.name,
+        category=product.category,
+        price=product.price,
+        stock=product.stock
+    )
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
 
-@app.post("/products", response_model=Product)
-def create_product(product: Product):
-    product.id = len(products_db) + 1
+    return new_product
 
-    products_db.append(product)
-
-    return product
-
+#UPDATE
 @app.put("/products/{product_id}")
-def update_product(product_id: int, updated_product: Product):
-    for index, product in enumerate(products_db):
+def update_product(product_id: int, updated_product: Product, db: Session = Depends(get_db)):
+    db_product = db.query(models.DBProduct).filter(models.DBProduct.id == product_id).first()
 
-        if type(product) is dict:
-            current_id = product["id"]
-        else:
-            current_id = product_id
-
-        if current_id == product_id:
-            updated_product.id = product_id
-            products_db[index] = updated_product.dict()
-            return updated_product
-        
-        return{"error": "Product not found"}
+    if not db_product:
+        return {"error": "Product not found"}
     
-@app.delete("/products/{product_id}")
-def delete_product(product_id: int):
-    for index, product in enumerate(products_db):
-        if type(product) is dict:
-            current_id = product["id"]
-        else:
-            current_id = product.id
+    db_product.name = update_product.name 
+    db_product.category = update_product.category
+    db_product.price = update_product.price
+    db_product.stock = update_product.stock
 
-        if current_id == product_id:
-            del products_db[index]
-            return {"message": "Product deleted successfully"}
-        
-    return{"error": "Product not found"}
+    db.commit()
+    db.refresh(db_product)
+
+    return db_product
+
+#DELETE
+@app.delete("/products/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    db_product = db.query(models.DBProduct).filter(models.DBProduct.id == product_id).first()
+
+    if not db_product:
+        return {"error": "Product not found"}
+    
+    db.delete(db_product)
+    db.commit()
+
+    return {"message": "Product deleted successfully"}
