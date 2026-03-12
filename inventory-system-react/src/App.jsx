@@ -132,27 +132,14 @@ function App() {
       },
       body: JSON.stringify(updatedProduct),
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Error al actualizar en el servidor");
-        }
-        return response.json();
-      })
-      .then((dataDelServidor) => {
-        const newProducts = products.map((product) => {
-          if (product.id === dataDelServidor) {
-            return dataDelServidor;
-          }
-          return product;
-        });
-        setProducts(newProducts);
-        setProductToEdit(null);
+      .then((response) => response.json())
+      .then((data) => {
+        setProducts(products.map((p) => (p.id === data.id ? data : p)));
+
+        setIsEditModalOpen(false);
         toast.success("Product updated successfully!");
       })
-      .catch((error) => {
-        console.error("Error updating product:", error);
-        toast.error("Error: Could not update product");
-      });
+      .catch((error) => console.error("Error updating product:", error));
   };
 
   const filteredProducts = products.filter((product) => {

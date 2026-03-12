@@ -66,10 +66,10 @@ def update_product(product_id: int, updated_product: Product, db: Session = Depe
     if not db_product:
         return {"error": "Product not found"}
     
-    db_product.name = update_product.name 
-    db_product.category = update_product.category
-    db_product.price = update_product.price
-    db_product.stock = update_product.stock
+    db_product.name = updated_product.name 
+    db_product.category = updated_product.category
+    db_product.price = updated_product.price
+    db_product.stock = updated_product.stock
 
     db.commit()
     db.refresh(db_product)
