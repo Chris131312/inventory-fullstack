@@ -2,8 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+from database import engine
+import models
 
 app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
 
 origins = [
     "http://localhost:5173",
