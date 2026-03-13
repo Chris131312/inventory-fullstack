@@ -85,8 +85,19 @@ function App() {
       }
       return product;
     });
-
     setProducts(updatedProducts);
+
+    const productToSend = updatedProducts.find((p) => p.id === id);
+
+    fetch(`http://127.0.0.1:8000/products/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(productToSend),
+    }).catch((error) => {
+      console.error("Error updating stock in database:", error);
+    });
   };
 
   const handleDeleteProduct = (id) => {
