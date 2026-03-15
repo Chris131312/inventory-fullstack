@@ -29,7 +29,6 @@ function App() {
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem("inventory_user", JSON.stringify(userData));
-    toast.success(`Welcome back, ${userData.name}!`);
   };
 
   const handleLogout = () => {

@@ -2,16 +2,38 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (email === "admin@inventory.com" && password === "1234") {
-      onLogin({ email: email, name: "Admin User" });
-    } else {
-      toast.error("Invalid credentials.");
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Invalid credentials");
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem("token", data.access_token);
+      toast.success("Login successful!");
+
+      onLogin({ username: username });
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Incorrect username or password.");
     }
   };
 
@@ -28,14 +50,14 @@ function LoginPage({ onLogin }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email
+              Username
             </label>
             <input
-              type="email"
+              type="text"
               className="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none transition"
-              placeholder="admin@inventory.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div>
@@ -45,7 +67,7 @@ function LoginPage({ onLogin }) {
             <input
               type="password"
               className="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none transition"
-              placeholder="****"
+              placeholder="******"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -57,9 +79,10 @@ function LoginPage({ onLogin }) {
             Sign In
           </button>
         </form>
+
         <div className="mt-6 text-center text-xs text-slate-400">
           <p>Demo Credentials</p>
-          <p>User: admin@inventory.com | Pass: 1234</p>
+          <p>User: admin | Pass: 123456</p>
         </div>
       </div>
     </div>
