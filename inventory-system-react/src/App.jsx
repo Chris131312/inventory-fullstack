@@ -12,14 +12,28 @@ function App() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/products")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Datos recibidos de Python:", data);
-        setProducts(data);
-      })
-      .catch((error) => console.error("Error conectando:", error));
-  }, []);
+    const token = localStorage.getItem("token");
+
+    fetch("http://127.0.0.1:8000/products", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
+    .then((response) => {
+      if (!response){
+        throw new Error("Unauthorized or session expired")
+      }
+      return response.json()
+    })
+    .then((data) => {
+      console.log("Data successfully fetched:", data)
+      setProducts(data)
+    })
+    .catch((error) => {
+      console.error("Error fetching products:", error)
+    })
+  }, [])
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("inventory_user");
