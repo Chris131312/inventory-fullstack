@@ -142,3 +142,5 @@ def delete_product(product_id: int, db: Session = Depends(get_db), current_user:
     db.commit()
 
     return {"message": "Product deleted successfully"}
+
+#COMMENT
