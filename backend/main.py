@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -19,6 +19,25 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    return username
+
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -80,7 +99,7 @@ def get_products(db: Session = Depends(get_db)):
 
 #POST
 @app.post("/products")
-def create_product(product: Product, db: Session = Depends(get_db)):
+def create_product(product: Product, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     new_product = models.DBProduct(
         name=product.name,
         category=product.category,
@@ -95,7 +114,7 @@ def create_product(product: Product, db: Session = Depends(get_db)):
 
 #UPDATE
 @app.put("/products/{product_id}")
-def update_product(product_id: int, updated_product: Product, db: Session = Depends(get_db)):
+def update_product(product_id: int, updated_product: Product, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_product = db.query(models.DBProduct).filter(models.DBProduct.id == product_id).first()
 
     if not db_product:
@@ -113,7 +132,7 @@ def update_product(product_id: int, updated_product: Product, db: Session = Depe
 
 #DELETE
 @app.delete("/products/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(product_id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_product = db.query(models.DBProduct).filter(models.DBProduct.id == product_id).first()
 
     if not db_product:
