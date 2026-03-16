@@ -17,23 +17,23 @@ function App() {
     fetch("http://127.0.0.1:8000/products", {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .then((response) => {
-      if (!response){
-        throw new Error("Unauthorized or session expired")
-      }
-      return response.json()
-    })
-    .then((data) => {
-      console.log("Data successfully fetched:", data)
-      setProducts(data)
-    })
-    .catch((error) => {
-      console.error("Error fetching products:", error)
-    })
-  }, [])
+      .then((response) => {
+        if (!response) {
+          throw new Error("Unauthorized or session expired");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Data successfully fetched:", data);
+        setProducts(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+      });
+  }, []);
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("inventory_user");
@@ -270,3 +270,4 @@ function App() {
 export default App;
 
 //comment
+//commenttttt
