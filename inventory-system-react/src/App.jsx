@@ -6,11 +6,26 @@ import ProductForm from "./components/ProductForm";
 import EditProductModal from "./components/EditProductModal";
 import LoginPage from "./components/LoginPage";
 import DashboardStats from "./components/DashboardStats";
-import { data } from "autoprefixer";
 
 function App() {
+  // State management
   const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [productToEdit, setProductToEdit] = useState(null);
 
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("inventory_user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const categories = [
+    "All",
+    ...new Set(products.map((product) => product.category)),
+  ];
+
+  // Fetch products on load
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -21,13 +36,12 @@ function App() {
       },
     })
       .then((response) => {
-        if (!response) {
+        if (!response.ok) {
           throw new Error("Unauthorized or session expired");
         }
         return response.json();
       })
       .then((data) => {
-        console.log("Data successfully fetched:", data);
         setProducts(data);
       })
       .catch((error) => {
@@ -35,11 +49,12 @@ function App() {
       });
   }, []);
 
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("inventory_user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  // Save products to local storage for backup
+  useEffect(() => {
+    localStorage.setItem("inventory_products", JSON.stringify(products));
+  }, [products]);
 
+  // Auth functions
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem("inventory_user", JSON.stringify(userData));
@@ -48,50 +63,42 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem("inventory_user");
-    toast.info("You have been logget out.");
+    toast.info("You have been logged out.");
   };
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  // Add new product
+  const handleAddProduct = async (newProductData) => {
+    const token = localStorage.getItem("token");
 
-  const [productToDelete, setProductToDelete] = useState(null);
-  const [productToEdit, setProductToEdit] = useState(null);
-  const categories = [
-    "All",
-    ...new Set(products.map((product) => product.category)),
-  ];
-
-  useEffect(() => {
-    localStorage.setItem("inventory_products", JSON.stringify(products));
-  }, [products]);
-
-  const handleAddProduct = (newProductData) => {
-    fetch("http://127.0.0.1:8000/products", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newProductData),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to add product");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setProducts([...products, data]);
-        toast.success("Product added successfully");
-      })
-      .catch((error) => {
-        console.error("Error adding product:", error);
-        alert("Error: Could not connect to the server.");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newProductData),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to add product");
+      }
+
+      const data = await response.json();
+      setProducts([...products, data]);
+      toast.success("Product added successfully");
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error("Error: Could not connect to the server.");
+    }
   };
 
-  const handleUpdateStock = (id, newStock) => {
+  // Update stock (+ / - buttons)
+  const handleUpdateStock = async (id, newStock) => {
     if (newStock < 0) return;
+    const token = localStorage.getItem("token");
 
+    // Update UI immediately
     const updatedProducts = products.map((product) => {
       if (product.id === id) {
         return { ...product, stock: newStock };
@@ -102,70 +109,95 @@ function App() {
 
     const productToSend = updatedProducts.find((p) => p.id === id);
 
-    fetch(`http://127.0.0.1:8000/products/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(productToSend),
-    }).catch((error) => {
-      console.error("Error updating stock in database:", error);
-    });
+    // Send update to server
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(productToSend),
+      });
+
+      if (!response.ok) throw new Error("Failed to update stock");
+    } catch (error) {
+      console.error("Error updating stock:", error);
+      toast.error("Error updating stock on server");
+    }
   };
 
+  // Prepare product for deletion
   const handleDeleteProduct = (id) => {
     setProductToDelete(id);
   };
 
-  const confirmDelete = () => {
+  // Confirm and delete product
+  const confirmDelete = async () => {
     if (!productToDelete) return;
+    const token = localStorage.getItem("token");
 
-    fetch(`http://127.0.0.1:8000/products/${productToDelete}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Error al borrar en el servidor");
-        }
-        return response.json();
-      })
-      .then(() => {
-        const product = products.find((p) => p.id === productToDelete);
-        const newProducts = products.filter((p) => p.id !== productToDelete);
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/products/${productToDelete}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-        setProducts(newProducts);
+      if (!response.ok) {
+        throw new Error("Error deleting product on server");
+      }
 
-        if (product) {
-          toast.error(`${product.name} removed from system.`);
-        }
+      const product = products.find((p) => p.id === productToDelete);
+      const newProducts = products.filter((p) => p.id !== productToDelete);
 
-        setProductToDelete(null);
-      })
-      .catch((error) => {
-        console.error("Error deleting product:", error);
-        toast.error("Error: Could not delete product");
-      });
+      setProducts(newProducts);
+      setProductToDelete(null); // Close modal
+
+      if (product) {
+        toast.error(`${product.name} removed from system.`);
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.error("Error: Could not delete product");
+    }
   };
 
-  const handleSaveEdit = (updatedProduct) => {
-    console.log("Datos que intentamos enviar:", updatedProduct);
-    fetch(`http://127.0.0.1:8000/products/${updatedProduct.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updatedProduct),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setProducts(products.map((p) => (p.id === data.id ? data : p)));
+  // Save edited product
+  const handleSaveEdit = async (updatedProduct) => {
+    const token = localStorage.getItem("token");
 
-        setIsEditModalOpen(false);
-        toast.success("Product updated successfully!");
-      })
-      .catch((error) => console.error("Error updating product:", error));
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/products/${updatedProduct.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedProduct),
+        },
+      );
+
+      if (!response.ok) throw new Error("Failed to update product");
+
+      const data = await response.json();
+
+      setProducts(products.map((p) => (p.id === data.id ? data : p)));
+      setProductToEdit(null); // Close modal
+      toast.success("Product updated successfully!");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error("Error updating product");
+    }
   };
 
+  // Search and filter logic
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
@@ -175,6 +207,7 @@ function App() {
     return matchesSearch && matchesCategory;
   });
 
+  // Render Login if user is not authenticated
   if (!user) {
     return (
       <>
@@ -184,6 +217,7 @@ function App() {
     );
   }
 
+  // Render Main Dashboard
   return (
     <div className="min-h-screen bg-slate-100">
       <Toaster richColors position="bottom-right" />
@@ -194,6 +228,7 @@ function App() {
         <DashboardStats products={products} />
         <ProductForm addProduct={handleAddProduct} />
 
+        {/* Search and Filter Section */}
         <div className="mb-8 bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4">
           <input
             type="text"
@@ -228,6 +263,7 @@ function App() {
         />
       </main>
 
+      {/* Delete Confirmation Modal */}
       {productToDelete !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
@@ -256,6 +292,8 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Edit Product Modal */}
       {productToEdit !== null && (
         <EditProductModal
           product={productToEdit}
@@ -268,6 +306,3 @@ function App() {
 }
 
 export default App;
-
-//comment
-//commenttttt
