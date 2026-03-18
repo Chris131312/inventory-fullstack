@@ -75,6 +75,10 @@ class Product(BaseModel):
     price: float
     stock: int
 
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
 #ENDPOINT LOGING
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -90,6 +94,27 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
     return {"access_token": access_token, "token_type": "bearer"}
 
+#NewUserRegister
+@app.post("/register")
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+
+    if db_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Username already registered"
+        )
+    hashed_password = pwd_context.hash(user.password)
+
+    new_user = models.User(
+        username=user.username,
+        password=hashed_password
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "username": new_user.username}
 
 #GET
 @app.get("/products")
