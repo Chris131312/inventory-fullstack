@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useState } from "react";
 import { toast } from "sonner";
 
 const LoginPage = ({ onLogin }) => {
@@ -37,27 +37,25 @@ const LoginPage = ({ onLogin }) => {
     } else {
       // --Login FLow--
       try {
-        const formData = new URLSearchParams();
+        const formData = new FormData();
         formData.append("username", username);
         formData.append("password", password);
 
         const response = await fetch("http://127.0.0.1:8000/login", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-ww-form-urlencoded",
-          },
           body: formData,
         });
 
         if (!response.ok) {
           throw new Error("Invalid username or password");
         }
+
         const data = await response.json();
 
         localStorage.setItem("token", data.access_token);
 
         onLogin({ username });
-        toast.success(`Welcome, ${username}!`);
+        toast.success(`Welcome. ${username}!`);
       } catch (error) {
         console.error("Login error:", error);
         toast.error(error.message);
