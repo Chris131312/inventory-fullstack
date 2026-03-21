@@ -10,6 +10,23 @@ const LoginPage = ({ onLogin }) => {
   // UI state
   const [showPassword, setShowPassword] = useState(false);
 
+  //Password Strenght
+  const getPasswordStrength = (pass) => {
+    let score = 0;
+    if (!pass) return 0;
+    if (pass.length > 5) score += 33;
+    if (/[A-Z]/.test(pass)) score += 33;
+    if (/[0-9!@#$%^&*]/.test(pass)) score += 34;
+    return score;
+  };
+  const strengthScore = getPasswordStrength(password);
+
+  const getStrengthColor = () => {
+    if (strengthScore < 34) return "bg-red-400";
+    if (strengthScore < 64) return "bg-yellow-400";
+    return "bg-green-500";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -65,7 +82,7 @@ const LoginPage = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      {/* Left Side - Branding (Hidden on mobile) */}
+      {/* Left Side - Branding */}
       <div className="hidden lg:flex w-1/2 bg-indigo-900 justify-center items-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-800 to-slate-900 opacity-90"></div>
         <div className="relative z-10 text-center px-12">
@@ -95,8 +112,14 @@ const LoginPage = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Username
+              <label className="block text-sm font-semibold text-slate-700 mb-1 flex justify-between">
+                <span>Username</span>
+                {/* Live Validation checkmark for username */}
+                {isRegistering && username.length >= 4 && (
+                  <span className="text-green-500 font-bold text-xs transition-opacity">
+                    ✓ Looks good
+                  </span>
+                )}
               </label>
               <input
                 type="text"
@@ -121,7 +144,6 @@ const LoginPage = ({ onLogin }) => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                 />
-                {/* Toggle password visibility button */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -130,6 +152,26 @@ const LoginPage = ({ onLogin }) => {
                   {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
+
+              {/* Password Strength Meter (Only shown during registration) */}
+              {isRegistering && password.length > 0 && (
+                <div className="mt-2 transition-all">
+                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      // Aquí es donde ocurría el error, llamando a getStrengthColor()
+                      className={`h-full transition-all duration-300 ${getStrengthColor()}`}
+                      style={{ width: `${strengthScore}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
+                    {strengthScore < 34
+                      ? "Weak (Add letters/numbers)"
+                      : strengthScore < 67
+                        ? "Medium (Add uppercase/symbols)"
+                        : "Strong!"}
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
