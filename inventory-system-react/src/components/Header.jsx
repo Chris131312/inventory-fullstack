@@ -1,9 +1,11 @@
+import { Package } from "lucide-react";
+
 function Header({ user, onLogout }) {
   return (
     <header className="bg-slate-900 text-white p-4 shadow-lg">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">📦</span>
+          <Package className="text-indigo-400 w-7 h-7" strokeWidth={2.5} />
           <h1 className="text-xl font-bold tracking-wide">
             Inventory Managment System
           </h1>
