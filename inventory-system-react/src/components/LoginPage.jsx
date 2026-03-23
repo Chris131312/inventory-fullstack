@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { Check, Eye, EyeOff } from "lucide-react";
 
 const LoginPage = ({ onLogin }) => {
   // Form state
@@ -117,7 +118,8 @@ const LoginPage = ({ onLogin }) => {
                 {/* Live Validation checkmark for username */}
                 {isRegistering && username.length >= 4 && (
                   <span className="text-green-500 font-bold text-xs transition-opacity">
-                    ✓ Looks good
+                    <Check size={14} stroke="3" />
+                    Looks good
                   </span>
                 )}
               </label>
@@ -149,7 +151,7 @@ const LoginPage = ({ onLogin }) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-indigo-600 focus:outline-none font-medium text-sm transition-colors"
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
 
