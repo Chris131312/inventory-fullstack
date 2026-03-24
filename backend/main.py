@@ -76,6 +76,9 @@ class Product(BaseModel):
     stock: int
 
 class UserCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
     username: str
     password: str
 
@@ -104,9 +107,15 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=400,
             detail="Username already registered"
         )
+    db_email = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_email: 
+        raise HTTPException(status_code=400, detail="Email already registered")
     hashed_password = pwd_context.hash(user.password)
 
     new_user = models.User(
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email,
         username=user.username,
         password=hashed_password
     )
