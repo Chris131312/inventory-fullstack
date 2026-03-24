@@ -4,6 +4,9 @@ import { Check, Eye, EyeOff } from "lucide-react";
 
 const LoginPage = ({ onLogin }) => {
   // Form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
@@ -39,7 +42,13 @@ const LoginPage = ({ onLogin }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            username: username,
+            password: password,
+          }),
         });
         if (!response.ok) {
           const errorData = await response.json();
@@ -48,6 +57,10 @@ const LoginPage = ({ onLogin }) => {
 
         toast.success("Account created successfully! You can now log in.");
         setIsRegistering(false);
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setUsername("");
         setPassword("");
       } catch (error) {
         console.error("Registration error:", error);
@@ -80,12 +93,20 @@ const LoginPage = ({ onLogin }) => {
       }
     }
   };
+  const toggleMode = () => {
+    setIsRegistering(!isRegistering);
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setUsername("");
+    setPassword("");
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-50">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex w-1/2 bg-indigo-900 justify-center items-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-800 to-slate-900 opacity-90"></div>
+      <div className="hidden lg:flex w-1/2 bg-indigo-950 justify-center items-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-900 opacity-90"></div>
         <div className="relative z-10 text-center px-12">
           <h1 className="text-5xl font-bold text-white mb-6 tracking-tight">
             Inventory <span className="text-indigo-400">Pro</span>
@@ -111,22 +132,67 @@ const LoginPage = ({ onLogin }) => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isRegistering && (
+              <>
+                <div className="flex gap-4">
+                  <div className="w-1/2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="John"
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="john@company.com"
+                  />
+                </div>
+              </>
+            )}
+
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1 flex justify-between">
+              <label className="block text-sm font-semibold text-slate-700 mb-1 flex justify-between items-center">
                 <span>Username</span>
-                {/* Live Validation checkmark for username */}
                 {isRegistering && username.length >= 4 && (
-                  <span className="text-green-500 font-bold text-xs transition-opacity">
-                    <Check size={14} stroke="3" />
-                    Looks good
+                  <span className="text-green-500 font-bold text-xs transition-opacity flex items-center gap-1">
+                    <Check size={14} strokeWidth={3} /> Looks good
                   </span>
                 )}
               </label>
               <input
                 type="text"
                 required
-                className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your username"
@@ -141,7 +207,7 @@ const LoginPage = ({ onLogin }) => {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
-                  className="w-full p-3 pr-12 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full p-3 pr-12 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -149,27 +215,25 @@ const LoginPage = ({ onLogin }) => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-indigo-600 focus:outline-none font-medium text-sm transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-indigo-600 focus:outline-none transition-colors"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
 
-              {/* Password Strength Meter (Only shown during registration) */}
               {isRegistering && password.length > 0 && (
                 <div className="mt-2 transition-all">
                   <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      // Aquí es donde ocurría el error, llamando a getStrengthColor()
                       className={`h-full transition-all duration-300 ${getStrengthColor()}`}
                       style={{ width: `${strengthScore}%` }}
                     ></div>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 font-medium">
                     {strengthScore < 34
-                      ? "Weak (Add letters/numbers)"
+                      ? "Weak"
                       : strengthScore < 67
-                        ? "Medium (Add uppercase/symbols)"
+                        ? "Medium"
                         : "Strong!"}
                   </p>
                 </div>
@@ -178,19 +242,15 @@ const LoginPage = ({ onLogin }) => {
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all mt-4"
+              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all mt-6"
             >
               {isRegistering ? "Sign Up" : "Sign In"}
             </button>
           </form>
 
-          <div className="mt-8 text-center border-t border-slate-100 pt-6">
+          <div className="mt-6 text-center border-t border-slate-100 pt-6">
             <button
-              onClick={() => {
-                setIsRegistering(!isRegistering);
-                setPassword("");
-                setUsername("");
-              }}
+              onClick={toggleMode}
               className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
             >
               {isRegistering
