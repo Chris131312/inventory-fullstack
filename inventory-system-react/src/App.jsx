@@ -25,6 +25,19 @@ function App() {
     ...new Set(products.map((product) => product.category)),
   ];
 
+  // Auth functions
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem("inventory_user", JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("inventory_user");
+    localStorage.removeItem("token");
+    toast.info("You have been logged out.");
+  };
+
   // Fetch products on load
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -36,8 +49,12 @@ function App() {
       },
     })
       .then((response) => {
+        if (response.status === 401) {
+          handleLogout();
+          throw new Error("Session expired");
+        }
         if (!response.ok) {
-          throw new Error("Unauthorized or session expired");
+          throw new Error("Failed to fetch products");
         }
         return response.json();
       })
@@ -54,18 +71,6 @@ function App() {
     localStorage.setItem("inventory_products", JSON.stringify(products));
   }, [products]);
 
-  // Auth functions
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem("inventory_user", JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("inventory_user");
-    toast.info("You have been logged out.");
-  };
-
   // Add new product
   const handleAddProduct = async (newProductData) => {
     const token = localStorage.getItem("token");
@@ -79,6 +84,12 @@ function App() {
         },
         body: JSON.stringify(newProductData),
       });
+
+      if (response.status === 401) {
+        handleLogout();
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to add product");
@@ -120,6 +131,12 @@ function App() {
         body: JSON.stringify(productToSend),
       });
 
+      if (response.status === 401) {
+        handleLogout();
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
       if (!response.ok) throw new Error("Failed to update stock");
     } catch (error) {
       console.error("Error updating stock:", error);
@@ -148,6 +165,13 @@ function App() {
         },
       );
 
+      if (response.status === 401) {
+        setProductToDelete(null);
+        handleLogout();
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("Error deleting product on server");
       }
@@ -156,7 +180,7 @@ function App() {
       const newProducts = products.filter((p) => p.id !== productToDelete);
 
       setProducts(newProducts);
-      setProductToDelete(null); // Close modal
+      setProductToDelete(null);
 
       if (product) {
         toast.error(`${product.name} removed from system.`);
@@ -184,12 +208,19 @@ function App() {
         },
       );
 
+      if (response.status === 401) {
+        setProductToEdit(null);
+        handleLogout();
+        toast.error("Session expired. Please log in again.");
+        return;
+      }
+
       if (!response.ok) throw new Error("Failed to update product");
 
       const data = await response.json();
 
       setProducts(products.map((p) => (p.id === data.id ? data : p)));
-      setProductToEdit(null); // Close modal
+      setProductToEdit(null);
       toast.success("Product updated successfully!");
     } catch (error) {
       console.error("Error updating product:", error);
