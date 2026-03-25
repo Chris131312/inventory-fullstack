@@ -69,11 +69,13 @@ app.add_middleware(
 )
 
 class Product(BaseModel):
-    id: int
     name: str
     category: str
     price: float
-    stock: int
+    stock: int = 0
+
+class Product(ProductCreate):
+    id: int
 
 class UserCreate(BaseModel):
     first_name: str
@@ -133,7 +135,7 @@ def get_products(db: Session = Depends(get_db)):
 
 #POST
 @app.post("/products")
-def create_product(product: Product, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+def create_product(product: ProductCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     new_product = models.DBProduct(
         name=product.name,
         category=product.category,
@@ -151,7 +153,7 @@ def create_product(product: Product, background_tasks: BackgroundTasks, db: Sess
 
 #UPDATE
 @app.put("/products/{product_id}")
-def update_product(product_id: int, updated_product: Product, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+def update_product(product_id: int, updated_product: ProductCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_product = db.query(models.DBProduct).filter(models.DBProduct.id == product_id).first()
 
     if not db_product:
