@@ -37,7 +37,7 @@ def send_low_stock_email(product_name: str, current_stock: int):
         msg.attach(MIMEText(body, 'plain'))
 
         # --- SIMULATION MODE ---
-        if SENDER_EMAIL == "your_email@gmail.com":
+        if SENDER_EMAIL == "christophermoli13@gmail.com":
             print("\n" + "="*50)
             print("EMAIL SIMULATION (Real credentials missing):")
             print(f"To: {ADMIN_EMAIL}")

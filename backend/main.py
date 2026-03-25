@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -68,7 +68,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Product(BaseModel):
+class ProductCreate(BaseModel):
     name: str
     category: str
     price: float
