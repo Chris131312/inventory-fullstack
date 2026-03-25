@@ -10,7 +10,7 @@ from database import SessionLocal
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
-
+from email_utils import send_low_stock_email
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
@@ -133,7 +133,7 @@ def get_products(db: Session = Depends(get_db)):
 
 #POST
 @app.post("/products")
-def create_product(product: Product, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+def create_product(product: Product, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     new_product = models.DBProduct(
         name=product.name,
         category=product.category,
@@ -144,11 +144,14 @@ def create_product(product: Product, db: Session = Depends(get_db), current_user
     db.commit()
     db.refresh(new_product)
 
+    if new_product.stock < 5:
+        background_tasks.add_tasks(send_low_stock_email, new_product.name, new_product.stock)
+
     return new_product
 
 #UPDATE
 @app.put("/products/{product_id}")
-def update_product(product_id: int, updated_product: Product, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+def update_product(product_id: int, updated_product: Product, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_product = db.query(models.DBProduct).filter(models.DBProduct.id == product_id).first()
 
     if not db_product:
@@ -161,6 +164,9 @@ def update_product(product_id: int, updated_product: Product, db: Session = Depe
 
     db.commit()
     db.refresh(db_product)
+
+    if db_product.stock < 5:
+        background_tasks.add_task(send_low_stock_email, db_product.name, db_product.stock)
 
     return db_product
 
