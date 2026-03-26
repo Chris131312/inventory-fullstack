@@ -19,3 +19,4 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    role = Column(String, default="user")
