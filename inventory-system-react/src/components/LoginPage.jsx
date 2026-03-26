@@ -85,8 +85,15 @@ const LoginPage = ({ onLogin }) => {
         const data = await response.json();
         localStorage.setItem("token", data.access_token);
 
-        onLogin({ username });
-        toast.success(`Welcome, ${username}!`);
+        const fullName = data.first_name
+          ? `${data.first_name} ${data.last_name}`
+          : data.username;
+
+        onLogin({
+          username: data.username,
+          name: fullName,
+        });
+        toast.success(`Welcome, ${fullName}!`);
       } catch (error) {
         console.error("Login error:", error);
         toast.error(error.message);
