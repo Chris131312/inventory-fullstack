@@ -92,6 +92,7 @@ const LoginPage = ({ onLogin }) => {
         onLogin({
           username: data.username,
           name: fullName,
+          role: data.role,
         });
         toast.success(`Welcome, ${fullName}!`);
       } catch (error) {

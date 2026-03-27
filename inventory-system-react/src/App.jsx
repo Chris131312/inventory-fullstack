@@ -291,6 +291,7 @@ function App() {
           deleteProduct={handleDeleteProduct}
           updateStock={handleUpdateStock}
           editProduct={(product) => setProductToEdit(product)}
+          currentUser={user}
         />
       </main>
 
